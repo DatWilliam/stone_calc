@@ -9,21 +9,21 @@ public class DecisionNode extends Node
     List<ProbabilityNode> cut_possibilities =  new ArrayList<ProbabilityNode>();
 
     public DecisionNode() {super(); }
-    public DecisionNode(byte chance, byte[] cut_status) { super(chance, cut_status); }
+    public DecisionNode(byte[] cut_status) { super(cut_status); }
 
     // checks which cuts are possible and make sense
     @Override
     void evaluate()
     {
 
-       //if(!is_outcome_possible())
-            //return;
+       if(!is_outcome_possible())
+            return;
 
        for(int i = 0; i < 3; i++)
        {
            if(BytePacker.unpackSum(cut_status[i]) < MAX_ROW_SIZE)
            {
-               cut_possibilities.add(new ProbabilityNode(chance, Arrays.copyOf(cut_status, cut_status.length), BytePacker.pack(0, i)));
+               cut_possibilities.add(new ProbabilityNode(Arrays.copyOf(cut_status, cut_status.length), BytePacker.pack(0, i)));
            }
        }
 

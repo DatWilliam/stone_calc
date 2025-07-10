@@ -1,37 +1,53 @@
 package Main;
 
-import java.util.Arrays;
+import static Main.BytePacker.*;
 
 public abstract class Node
 {
-    byte[] cut_status = new byte[4];
-    public static int MAX_ROW_SIZE = 10;
-    public static int[] DESIRED_OUTCOME = {7, 9};
+    protected byte[] cutStatus = new byte[4];
+    public static int MAX_ROW_SIZE = 2;
+    public static int[] DESIRED_OUTCOME = {1, 1};
 
     public Node()
     {
-        cut_status[3] = BytePacker.pack(7, 5);
+        cutStatus[3] = BytePacker.pack(7, 5);
     }
 
-    public Node(byte[] cut_status)
+    public Node(byte[] cutStatus)
     {
-        this.cut_status = cut_status;
+        this.cutStatus = cutStatus;
     }
 
-    public boolean is_finished()
+    public boolean isGoalHit()
     {
-        return BytePacker.unpackSum(cut_status[0]) == MAX_ROW_SIZE
-                && BytePacker.unpackSum(cut_status[1]) == MAX_ROW_SIZE
-                && BytePacker.unpackSum(cut_status[2]) == MAX_ROW_SIZE;
+        return (getRowHits(cutStatus[0]) == DESIRED_OUTCOME[0]
+                && getRowHits(cutStatus[1]) == DESIRED_OUTCOME[1])
+                || (getRowHits(cutStatus[0])== DESIRED_OUTCOME[1]
+                && getRowHits(cutStatus[1]) == DESIRED_OUTCOME[0]);
+
     }
 
-    public int get_hash() {
-        return ((this.cut_status[0] & 0xFF) << 24) |
-                ((this.cut_status[1] & 0xFF) << 16) |
-                ((this.cut_status[2] & 0xFF) << 8)  |
-                (this.cut_status[3] & 0xFF);
+    public boolean isFullCut()
+    {
+        return unpackSum(cutStatus[0]) == MAX_ROW_SIZE
+                && unpackSum(cutStatus[1]) == MAX_ROW_SIZE
+                && unpackSum(cutStatus[2]) == MAX_ROW_SIZE;
     }
 
+    public int getHash() {
+        return ((this.cutStatus[0] & 0xFF) << 24) |
+                ((this.cutStatus[1] & 0xFF) << 16) |
+                ((this.cutStatus[2] & 0xFF) << 8)  |
+                (this.cutStatus[3] & 0xFF);
+    }
+
+    public int getRowHits(Byte row) {
+        return unpackA(row);
+    }
+
+    public int getRowMisses(Byte row) {
+        return unpackB(row);
+    }
 
     abstract void evaluate();
 }

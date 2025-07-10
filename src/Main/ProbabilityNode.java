@@ -1,34 +1,41 @@
 package Main;
 
 import java.util.Arrays;
-
+import static Main.BytePacker.*;
+/*
+    this object covers the nodes for both the hit and the miss scenario
+    further it has the information in which row the cut was made
+ */
 public class ProbabilityNode extends Node
 {
-    DecisionNode hit;
-    DecisionNode miss;
-    byte row_id; // store id 0-2 in b
+    protected DecisionNode hit;
+    protected DecisionNode miss;
+    protected byte rowId; // store id 0-2 in b
 
-    public ProbabilityNode(byte[] cut_status, byte row_id) { super(cut_status); this.row_id = row_id; }
+    public ProbabilityNode(byte[] cut_status, byte rowId) { super(cut_status); this.rowId = rowId; }
 
     @Override
     void evaluate() {
-        hit = new DecisionNode(calc_cut_status(0));
-        miss = new DecisionNode(calc_cut_status(1));
+        hit = new DecisionNode(calcCutStatus(0));
+        miss = new DecisionNode(calcCutStatus(1));
     }
 
-    // i = 0 -> increment hit, i = 1 -> increment miss
-    byte[] calc_cut_status(int i)
+    byte[] calcCutStatus(int i) // 0 -> hit & 1 -> miss
     {
-        byte[] tmp = Arrays.copyOf(cut_status, cut_status.length);
+        byte[] copy = Arrays.copyOf(cutStatus, cutStatus.length);
         if(i == 0) {
-            tmp[BytePacker.unpackB(row_id)] = BytePacker.incrementA(cut_status[BytePacker.unpackB(row_id)]);
-            tmp[3] = BytePacker.decreasePercent(tmp[3]);
+            copy[getRowId()] = incrementA(cutStatus[getRowId()]);
+            copy[3] = decreasePercent(copy[3]);
         }
         else {
-            tmp[BytePacker.unpackB(row_id)] = BytePacker.incrementB(cut_status[BytePacker.unpackB(row_id)]);
-            tmp[3] = BytePacker.increasePercent(tmp[3]);
+            copy[getRowId()] = incrementB(cutStatus[getRowId()]);
+            copy[3] = increasePercent(copy[3]);
         }
-        return tmp;
+        return copy;
+    }
+
+    private int getRowId() {
+        return unpackB(rowId);
     }
 
 }

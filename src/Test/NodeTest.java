@@ -11,7 +11,7 @@ public class NodeTest {
         assertTrue(Node.MAX_ROW_SIZE <= 10);
         byte[] cut_status = {(byte)Node.MAX_ROW_SIZE, (byte)Node.MAX_ROW_SIZE, (byte)Node.MAX_ROW_SIZE};
         DecisionNode node = new DecisionNode(cut_status);
-        assertTrue(node.is_finished());
+        assertTrue(node.isFullCut());
     }
 
     @Test
@@ -20,7 +20,7 @@ public class NodeTest {
         if(Node.MAX_ROW_SIZE < 2) return;
         byte[] cut_status = {1, (byte)Node.MAX_ROW_SIZE, (byte)Node.MAX_ROW_SIZE};
         DecisionNode node = new DecisionNode(cut_status);
-        assertFalse(node.is_finished());
+        assertFalse(node.isFullCut());
     }
 
     @Test
@@ -31,7 +31,7 @@ public class NodeTest {
                 BytePacker.pack(Node.DESIRED_OUTCOME[1], 0),
                 0};
         DecisionNode node = new DecisionNode(cut_status);
-        assertTrue(node.is_outcome_possible());
+        assertTrue(node.isOutcomePossible());
     }
 
     @Test
@@ -42,7 +42,56 @@ public class NodeTest {
                 BytePacker.pack(0, 0),
                 0};
         DecisionNode node = new DecisionNode(cut_status);
-        assertFalse(node.is_outcome_possible());
+        assertFalse(node.isOutcomePossible());
+    }
+
+    @Test
+    void test_is_goalHit_1()
+    {
+        byte[] cut_status = {
+                BytePacker.pack(Node.MAX_ROW_SIZE, 0),
+                BytePacker.pack(Node.MAX_ROW_SIZE, 0),
+                0};
+        DecisionNode node = new DecisionNode(cut_status);
+        assertTrue(node.isGoalHit());
+    }
+
+    @Test
+    void test_is_goalHit_2()
+    {
+        int min = Math.min(Node.DESIRED_OUTCOME[0], Node.DESIRED_OUTCOME[1]);
+        int max = Math.max(Node.DESIRED_OUTCOME[0], Node.DESIRED_OUTCOME[1]);
+
+        byte[] cut_status = {
+                BytePacker.pack(max, 0),
+                BytePacker.pack(min, 0),
+                0};
+        DecisionNode node = new DecisionNode(cut_status);
+        assertTrue(node.isGoalHit());
+    }
+
+    @Test
+    void test_is_not_desired_outcome_1()
+    {
+        byte[] cut_status = {
+                BytePacker.pack(0, 0),
+                BytePacker.pack(0, 0),
+                0};
+        DecisionNode node = new DecisionNode(cut_status);
+        assertFalse(node.isGoalHit());
+    }
+
+    @Test
+    void test_is_not_desired_outcome_2()
+    {
+        int min = Math.min(Node.DESIRED_OUTCOME[0], Node.DESIRED_OUTCOME[1]);
+
+        byte[] cut_status = {
+                BytePacker.pack(min-1, 0),
+                BytePacker.pack(min-1, 0),
+                0};
+        DecisionNode node = new DecisionNode(cut_status);
+        assertFalse(node.isGoalHit());
     }
 
 }

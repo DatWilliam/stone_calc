@@ -4,40 +4,41 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/*
+    this object contains all possible decisions that are legal for the turn
+    and therefore excludes rows that are fully cut
+ */
 public class DecisionNode extends Node
 {
-    List<ProbabilityNode> cut_possibilities =  new ArrayList<ProbabilityNode>();
+    protected List<ProbabilityNode> cutPaths =  new ArrayList<ProbabilityNode>();
 
     public DecisionNode() {super(); }
     public DecisionNode(byte[] cut_status) { super(cut_status); }
 
-    // checks which cuts are possible and make sense
     @Override
     void evaluate()
     {
-
-       if(!is_outcome_possible())
+       if(!isOutcomePossible())
             return;
 
        for(int i = 0; i < 3; i++)
        {
-           if(BytePacker.unpackSum(cut_status[i]) < MAX_ROW_SIZE)
-           {
-               cut_possibilities.add(new ProbabilityNode(Arrays.copyOf(cut_status, cut_status.length), BytePacker.pack(0, i)));
-           }
+           if(BytePacker.unpackSum(cutStatus[i]) < MAX_ROW_SIZE)
+               cutPaths.add(new ProbabilityNode(Arrays.copyOf(cutStatus, cutStatus.length), BytePacker.pack(0, i)));
        }
 
     }
 
-    // checks if the desired outcome is possible
-    public boolean is_outcome_possible()
+    public boolean isOutcomePossible()
     {
-        int min = Math.min(DESIRED_OUTCOME[0], DESIRED_OUTCOME[1]);
-        int max = Math.max(DESIRED_OUTCOME[0], DESIRED_OUTCOME[1]);
+        int low = Math.min(DESIRED_OUTCOME[0], DESIRED_OUTCOME[1]);
+        int high = Math.max(DESIRED_OUTCOME[0], DESIRED_OUTCOME[1]);
 
-        return BytePacker.unpackB(cut_status[0]) <= MAX_ROW_SIZE - min
-                && BytePacker.unpackB(cut_status[1]) <= MAX_ROW_SIZE - min
-                && (BytePacker.unpackB(cut_status[0]) <= MAX_ROW_SIZE - max || BytePacker.unpackB(cut_status[1]) <= MAX_ROW_SIZE - max);
+        return getRowMisses(cutStatus[0]) <= MAX_ROW_SIZE - low
+                && getRowMisses(cutStatus[1]) <= MAX_ROW_SIZE - low
+                && (getRowMisses(cutStatus[0]) <= MAX_ROW_SIZE - high || getRowMisses(cutStatus[1]) <= MAX_ROW_SIZE - high);
     }
+
+
 
 }

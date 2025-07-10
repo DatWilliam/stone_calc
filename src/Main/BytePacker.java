@@ -1,9 +1,10 @@
 package Main;
-
-// store two numbers as a byte
-// a = hit, b = miss
-// for single numbers b will be used
-// for percent a is the first number after . and b the second
+/*
+    store two numbers as a byte
+    a = hit, b = miss
+    for single numbers b will be used
+    for percent a is the first number after . and b the second
+ */
 public class BytePacker {
     public static byte pack(int a, int b) {
         return (byte) ((a << 4) | (b & 0xF));
@@ -29,10 +30,14 @@ public class BytePacker {
         return (byte) (packed + 1);
     }
 
-    // muss getestet werden
     public static double toDouble(byte packed) {
         int high = (packed >> 4) & 0xF;
         return high / 10.0 + 0.05;  // z.B. 6 → 0.65
+    }
+
+    public static float toFloat(byte packed) {
+        int high = (packed >> 4) & 0xF;
+        return high / 10.0f + 0.05f;
     }
 
     public static byte increasePercent(byte packed) {

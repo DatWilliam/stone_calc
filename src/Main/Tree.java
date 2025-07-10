@@ -6,9 +6,9 @@ import java.util.Map;
 public class Tree
 {
     DecisionNode root = new DecisionNode();
-    Map<Integer, DecisionNode> map = new HashMap<Integer, DecisionNode>();
-    Map<Integer, Integer> count_map = new HashMap<Integer, Integer>();
-    // creates the tree structure
+    Map<Integer, DecisionNode> cache = new HashMap<Integer, DecisionNode>();
+    Map<Integer, NodeInformation> nodeInfoMap = new HashMap<Integer, NodeInformation>(); //tuple 0->count, 1->chance, 2->is_desired
+
     void generate(DecisionNode root)
     {
         if(root == null)
@@ -16,55 +16,77 @@ public class Tree
 
         root.evaluate();
 
-        if(root.is_finished())
+        if(root.isFullCut())
             return;
 
-        for(ProbabilityNode node : root.cut_possibilities)
+        for(ProbabilityNode node : root.cutPaths)
         {
             node.evaluate();
 
-            if (map.get(node.hit.get_hash()) == null) {
-                map.put(node.hit.get_hash(), node.hit);
+            // if the path after hit doesn't exist create it and explore it
+            if (cache.get(node.hit.getHash()) == null) {
+                cache.put(node.hit.getHash(), node.hit);
                 generate(node.hit);
             }
-            else node.hit = map.get(node.hit.get_hash());
+            else // if it exists reference it
+                node.hit = cache.get(node.hit.getHash());
 
-            if (map.get(node.miss.get_hash()) == null) {
-                map.put(node.miss.get_hash(), node.miss);
+            // same for miss
+            if (cache.get(node.miss.getHash()) == null) {
+                cache.put(node.miss.getHash(), node.miss);
                 generate(node.miss);
             }
-            else node.miss =  map.get(node.miss.get_hash());
+            else node.miss =  cache.get(node.miss.getHash());
         }
     }
 
-    void recurse_count(DecisionNode node)
+    void traverse(DecisionNode node, float cumulative_chance)
     {
-        count_map.put(node.get_hash(), 1);
-        if(node.cut_possibilities.isEmpty())
-        {
+        NodeInformation info = new NodeInformation(cumulative_chance, node.isGoalHit());
+        nodeInfoMap.put(node.getHash(), info);
+
+        if(node.cutPaths.isEmpty())
             return;
-        }
 
-        for(int i = 0; i < node.cut_possibilities.size(); i++)
+        for(ProbabilityNode curr :  node.cutPaths)
         {
-            if(count_map.get(node.cut_possibilities.get(i).hit.get_hash()) == null)
+            if(nodeInfoMap.get(curr.hit.getHash()) == null) // pattern does not exist until now
+                traverse(curr.hit, cumulative_chance * BytePacker.toFloat(curr.cutStatus[3]));
+            else // pattern does exist -> increase counter
             {
-                recurse_count(node.cut_possibilities.get(i).hit);
-            }
-            else
-            {
-                count_map.put(node.cut_possibilities.get(i).hit.get_hash(), count_map.get(node.cut_possibilities.get(i).hit.get_hash())+1);
+                NodeInformation updated = nodeInfoMap.get(curr.hit.getHash());
+                updated.incrementCount();
+                nodeInfoMap.put(curr.hit.getHash(), updated);
             }
 
-            if(count_map.get(node.cut_possibilities.get(i).miss.get_hash()) == null)
-            {
-                recurse_count(node.cut_possibilities.get(i).miss);
-            }
+            if(nodeInfoMap.get(curr.miss.getHash()) == null)
+                traverse(curr.miss, cumulative_chance * (1-BytePacker.toFloat(curr.cutStatus[3])));
             else
             {
-                count_map.put(node.cut_possibilities.get(i).miss.get_hash(), count_map.get(node.cut_possibilities.get(i).miss.get_hash())+1);
+                NodeInformation updated = nodeInfoMap.get(curr.miss.getHash());
+                updated.incrementCount();
+                nodeInfoMap.put(curr.miss.getHash(), updated);
             }
         }
+    }
+
+    // sum up all the chances of the nodes that reached the goal
+    float getChance()
+    {
+        float sum = 0;
+        for (NodeInformation info : this.nodeInfoMap.values()) {
+            if(info.isGoal())
+            {
+                for(int i = 0; i < info.getCount(); i++)
+                    sum += info.getChance();
+            }
+        }
+        return sum;
+    }
+
+    public String floatToString(float value) {
+        float precent = value * 100;
+        return String.format("%." + 4 + "f%%", precent);
     }
 }
 

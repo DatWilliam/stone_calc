@@ -6,7 +6,7 @@ public abstract class Node
 {
     protected byte[] cutStatus = new byte[4];
     public static int MAX_ROW_SIZE = 10;
-    public static int[] DESIRED_OUTCOME = {7, 7};
+    public static int[] DESIRED_OUTCOME = {9, 7};
 
     public Node()
     {

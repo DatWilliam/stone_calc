@@ -7,7 +7,12 @@ public class Tree
     DecisionNode root = new DecisionNode();
     Map<Integer, DecisionNode> cache = new HashMap<Integer, DecisionNode>();
 
-    void generate(DecisionNode root)
+    public Tree()
+    {
+        generate(root);
+    }
+
+    private void generate(DecisionNode root)
     {
         if(root == null)
             return;
@@ -41,23 +46,20 @@ public class Tree
     Map<Integer, Float> chanceCache = new HashMap<>();
     float traverse(DecisionNode node)
     {
-        float maxChance = 0;
+        if(chanceCache.containsKey(node.getHash())) return chanceCache.get(node.getHash());
+        if(node.isGoalHitOrBetter()) return 1;
 
-        if(node.isGoalHitOrBetter()) return 1; // stop search if goal is hit
+        float maxChance = 0;
 
         for(ProbabilityNode curr : node.cutPaths)
         {
-            float chanceAfterHit = chanceCache.containsKey(curr.hit.getHash())
-                    ? chanceCache.get(curr.hit.getHash())
-                    : traverse(curr.hit);
-
-            float chanceAfterMiss = chanceCache.containsKey(curr.miss.getHash())
-                    ? chanceCache.get(curr.miss.getHash())
-                    : traverse(curr.miss);
+            float chanceAfterHit = traverse(curr.hit);
+            float chanceAfterMiss = traverse(curr.miss);
 
             float cutProbability = BytePacker.toFloat(node.cutStatus[3]);
             float weightedHit = chanceAfterHit * cutProbability;
             float weightedMiss = chanceAfterMiss * (1-cutProbability);
+
             maxChance = Math.max(maxChance, weightedHit+weightedMiss);
         }
         chanceCache.put(node.getHash(), maxChance);

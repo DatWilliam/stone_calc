@@ -5,8 +5,8 @@ import static Main.BytePacker.*;
 public abstract class Node
 {
     protected byte[] cutStatus = new byte[4];
-    public static int MAX_ROW_SIZE = 2;
-    public static int[] DESIRED_OUTCOME = {1, 1};
+    public static int MAX_ROW_SIZE = 10;
+    public static int[] DESIRED_OUTCOME = {7, 7};
 
     public Node()
     {
@@ -24,6 +24,15 @@ public abstract class Node
                 && getRowHits(cutStatus[1]) == DESIRED_OUTCOME[1])
                 || (getRowHits(cutStatus[0])== DESIRED_OUTCOME[1]
                 && getRowHits(cutStatus[1]) == DESIRED_OUTCOME[0]);
+
+    }
+
+    public boolean isGoalHitOrBetter()
+    {
+        return (getRowHits(cutStatus[0]) >= DESIRED_OUTCOME[0]
+                && getRowHits(cutStatus[1]) >= DESIRED_OUTCOME[1])
+                || (getRowHits(cutStatus[0])>= DESIRED_OUTCOME[1]
+                && getRowHits(cutStatus[1]) >= DESIRED_OUTCOME[0]);
 
     }
 

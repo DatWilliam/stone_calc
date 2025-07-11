@@ -1,5 +1,4 @@
 package Main;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -7,7 +6,6 @@ public class Tree
 {
     DecisionNode root = new DecisionNode();
     Map<Integer, DecisionNode> cache = new HashMap<Integer, DecisionNode>();
-    Map<Integer, NodeInformation> nodeInfoMap = new HashMap<Integer, NodeInformation>(); //tuple 0->count, 1->chance, 2->is_desired
 
     void generate(DecisionNode root)
     {
@@ -40,48 +38,30 @@ public class Tree
         }
     }
 
-    void traverse(DecisionNode node, float cumulative_chance)
+    Map<Integer, Float> chanceCache = new HashMap<>();
+    float traverse(DecisionNode node)
     {
-        NodeInformation info = new NodeInformation(cumulative_chance, node.isGoalHit());
-        nodeInfoMap.put(node.getHash(), info);
+        float maxChance = 0;
 
-        if(node.cutPaths.isEmpty())
-            return;
+        if(node.isGoalHitOrBetter()) return 1; // stop search if goal is hit
 
-        for(ProbabilityNode curr :  node.cutPaths)
+        for(ProbabilityNode curr : node.cutPaths)
         {
-            if(nodeInfoMap.get(curr.hit.getHash()) == null) // pattern does not exist until now
-                traverse(curr.hit, cumulative_chance * BytePacker.toFloat(curr.cutStatus[3]));
-            else // pattern does exist -> increase counter
-            {
-                NodeInformation updated = nodeInfoMap.get(curr.hit.getHash());
-                updated.incrementCount();
-                nodeInfoMap.put(curr.hit.getHash(), updated);
-            }
+            float chanceAfterHit = chanceCache.containsKey(curr.hit.getHash())
+                    ? chanceCache.get(curr.hit.getHash())
+                    : traverse(curr.hit);
 
-            if(nodeInfoMap.get(curr.miss.getHash()) == null)
-                traverse(curr.miss, cumulative_chance * (1-BytePacker.toFloat(curr.cutStatus[3])));
-            else
-            {
-                NodeInformation updated = nodeInfoMap.get(curr.miss.getHash());
-                updated.incrementCount();
-                nodeInfoMap.put(curr.miss.getHash(), updated);
-            }
-        }
-    }
+            float chanceAfterMiss = chanceCache.containsKey(curr.miss.getHash())
+                    ? chanceCache.get(curr.miss.getHash())
+                    : traverse(curr.miss);
 
-    // sum up all the chances of the nodes that reached the goal
-    float getChance()
-    {
-        float sum = 0;
-        for (NodeInformation info : this.nodeInfoMap.values()) {
-            if(info.isGoal())
-            {
-                for(int i = 0; i < info.getCount(); i++)
-                    sum += info.getChance();
-            }
+            float cutProbability = BytePacker.toFloat(node.cutStatus[3]);
+            float weightedHit = chanceAfterHit * cutProbability;
+            float weightedMiss = chanceAfterMiss * (1-cutProbability);
+            maxChance = Math.max(maxChance, weightedHit+weightedMiss);
         }
-        return sum;
+        chanceCache.put(node.getHash(), maxChance);
+        return maxChance;
     }
 
     public String floatToString(float value) {
